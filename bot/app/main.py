@@ -23,6 +23,7 @@ COMMANDS = [
     BotCommand(command="fork", description="развилка: две ветки и цена каждой"),
     BotCommand(command="seal", description="запечатать ветку"),
     BotCommand(command="audit", description="недельный аудит"),
+    BotCommand(command="who", description="кто сейчас говорит"),
     BotCommand(command="voice", description="сменить голос"),
     BotCommand(command="wipe", description="стереть всё"),
 ]

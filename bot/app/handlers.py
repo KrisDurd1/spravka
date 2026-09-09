@@ -340,20 +340,51 @@ async def spravka(msg: TgMessage) -> None:
     )
 
 
+@router.message(Command("who"))
+async def who(msg: TgMessage) -> None:
+    """Кто сейчас говорит — коротко, без списка."""
+    row = await memory.ensure_user(msg.from_user, msg.chat.id)
+    p = personas.load(row["persona"])
+    await msg.answer(
+        f"сейчас <b>{escape(p.name)}</b> — {escape(p.tagline)}\n"
+        f"сменить: <code>/voice</code>",
+        parse_mode="HTML",
+    )
+
+
 @router.message(Command("voice"))
 async def voice(msg: TgMessage) -> None:
-    arg = msg.text.partition(" ")[2].strip()
+    arg = msg.text.partition(" ")[2].strip().lower().lstrip("/")
     catalogue = personas.available()
     ids = {p.id for p in catalogue}
+    row = await memory.ensure_user(msg.from_user, msg.chat.id)
+    current = row["persona"]
 
     if arg in ids:
+        if arg == current:
+            p = personas.load(arg)
+            await msg.answer(f"уже {escape(p.name)}.")
+            return
         await memory.set_persona(msg.from_user.id, arg)
-        await memory.log(msg.from_user.id, "voice", arg)
-        await msg.answer(f"Голос переключён: {arg}")
+        await memory.log(msg.from_user.id, "voice", arg, chat_id=msg.chat.id)
+        p = personas.load(arg)
+        await msg.answer(
+            f"говорит <b>{escape(p.name)}</b> — {escape(p.tagline)}",
+            parse_mode="HTML",
+        )
         return
 
-    listing = "\n".join(f"<code>/voice {p.id}</code> — {p.name}, {p.tagline}" for p in catalogue)
-    await msg.answer("Доступные голоса:\n\n" + listing, parse_mode="HTML")
+    if arg:
+        await msg.answer(f"голоса «{escape(arg)}» нет. вот какие есть:")
+
+    lines = []
+    for p in catalogue:
+        mark = "▸ " if p.id == current else "  "
+        name = f"<b>{escape(p.name)}</b>" if p.id == current else escape(p.name)
+        here = " · сейчас" if p.id == current else ""
+        lines.append(f"{mark}{name} — {escape(p.tagline)}{here}\n"
+                     f"   <code>/voice {p.id}</code>")
+    await msg.answer("\n\n".join(lines), parse_mode="HTML")
 
 
 @router.message(Command("wipe"))

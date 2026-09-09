@@ -220,10 +220,24 @@ function open(v: Voice): void {
       return li;
     }),
   );
+  const card = document.querySelector<HTMLElement>(".card");
+  if (card && !REDUCED) {
+    card.classList.remove("switch");
+    void card.offsetWidth;          // перезапуск анимации
+    card.classList.add("switch");
+  }
+
   retype(v.sample);
   document.querySelectorAll<HTMLButtonElement>(".star").forEach((b) => {
     b.setAttribute("aria-pressed", String(b.dataset.id === v.id));
   });
+
+  // номер объекта в шапке прокручивается барабаном
+  const roll = document.getElementById("roll");
+  if (roll && !REDUCED) {
+    const n = String(VOICES.indexOf(v) + 1).padStart(2, "0");
+    roll.replaceChildren(Object.assign(document.createElement("b"), { textContent: n }));
+  }
 }
 
 /* ---------- звёзды и прицел ---------- */
@@ -269,9 +283,31 @@ function starmap(): void {
   if (REDUCED || !window.matchMedia("(hover: hover)").matches) return;
 
   field.addEventListener("pointerenter", () => field.classList.add("aiming"));
-  field.addEventListener("pointerleave", () => field.classList.remove("aiming"));
+  field.addEventListener("pointerleave", () => {
+    field.classList.remove("aiming");
+    for (const s of field.querySelectorAll<HTMLElement>(".star")) {
+      s.style.setProperty("--push-x", "0px");
+      s.style.setProperty("--push-y", "0px");
+    }
+  });
   field.addEventListener("pointermove", (e) => {
     const box = field.getBoundingClientRect();
+
+    // звёзды слегка отклоняются от курсора — будто их сдувает
+    for (const s of field.querySelectorAll<HTMLElement>(".star")) {
+      const r = s.getBoundingClientRect();
+      const dx = r.left + r.width / 2 - e.clientX;
+      const dy = r.top + r.height / 2 - e.clientY;
+      const dist = Math.hypot(dx, dy);
+      if (dist < 150) {
+        const push = (1 - dist / 150) * 16;
+        s.style.setProperty("--push-x", `${(dx / dist) * push}px`);
+        s.style.setProperty("--push-y", `${(dy / dist) * push}px`);
+      } else {
+        s.style.setProperty("--push-x", "0px");
+        s.style.setProperty("--push-y", "0px");
+      }
+    }
     let x = e.clientX - box.left;
     let y = e.clientY - box.top;
 
@@ -292,9 +328,29 @@ function starmap(): void {
   });
 }
 
+/* ---------- бегущая строка в шапке ---------- */
+
+function ticker(): void {
+  const line = $("feed");
+  const items = [
+    "пост на связи",
+    "объектов в поле: 04",
+    "журнал ведётся",
+    "показания снимаются",
+    "распад продолжается",
+    "всё обратимо, пока измеряется",
+  ];
+  // дублируем, чтобы лента шла без разрыва
+  const once = items.map((s) => `<b>·</b>&nbsp;&nbsp;${s}&nbsp;&nbsp;`).join("");
+  line.innerHTML = once + once;
+}
+
 /* ---------- появление блоков при скролле ---------- */
 
 function reveal(): void {
+  document.querySelectorAll<HTMLElement>(".eyebrow").forEach((el) => {
+    el.setAttribute("data-reveal", "");
+  });
   const items = document.querySelectorAll<HTMLElement>("[data-reveal]");
   if (REDUCED) {
     items.forEach((el) => el.classList.add("seen"));
@@ -355,6 +411,7 @@ function navigation(): void {
   });
 }
 
+ticker();
 sky($("hero-sky") as HTMLCanvasElement, 4800);
 sky($("voice-sky") as HTMLCanvasElement, 3600);
 ripple();
