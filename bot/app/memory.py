@@ -14,6 +14,44 @@ from .config import settings
 log = logging.getLogger(__name__)
 
 
+def _parse(ts: str) -> datetime | None:
+    try:
+        return datetime.fromisoformat(ts)
+    except (ValueError, TypeError):
+        return None
+
+
+def _gap(prev: datetime | None, now: datetime | None) -> str:
+    """Человеческая пометка о паузе перед репликой.
+
+    Модель видит только текст, поэтому без таких меток месяц молчания
+    и две минуты выглядят одинаково.
+    """
+    if now is None:
+        return ""
+    if prev is None:
+        return "начало разговора"
+
+    mins = (now - prev).total_seconds() / 60
+    if mins < 25:
+        return ""
+    if mins < 90:
+        return "спустя час"
+    if mins < 60 * 20:
+        return f"спустя {round(mins / 60)} ч"
+
+    days = mins / 1440
+    if days < 2:
+        return "на следующий день"
+    if days < 7:
+        return f"спустя {round(days)} дн"
+    if days < 25:
+        weeks = round(days / 7)
+        return "спустя неделю" if weeks == 1 else f"спустя {weeks} нед"
+    months = round(days / 30)
+    return "спустя месяц" if months == 1 else f"спустя {months} мес"
+
+
 def _now() -> str:
     return datetime.now(timezone.utc).isoformat(timespec="seconds")
 
@@ -284,10 +322,20 @@ class Memory:
     async def history(self, user_id: int, limit: int | None = None) -> list[dict[str, str]]:
         n = limit or settings.history_turns
         rows = await self._rows(
-            "SELECT role, content FROM messages WHERE user_id=? ORDER BY id DESC LIMIT ?",
+            "SELECT role, content, ts FROM messages WHERE user_id=? ORDER BY id DESC LIMIT ?",
             user_id, n,
         )
-        out = [{"role": r["role"], "content": r["content"]} for r in reversed(rows)]
+        out: list[dict[str, str]] = []
+        prev: datetime | None = None
+        for r in reversed(rows):
+            text = r["content"]
+            if r["role"] == "user":
+                stamp = _parse(r["ts"])
+                gap = _gap(prev, stamp)
+                if gap:
+                    text = f"[{gap}] {text}"
+                prev = stamp
+            out.append({"role": r["role"], "content": text})
         # Anthropic требует, чтобы разговор начинался с реплики человека
         while out and out[0]["role"] != "user":
             out.pop(0)

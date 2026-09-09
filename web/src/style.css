@@ -991,7 +991,7 @@ html { scroll-snap-type: y mandatory; scroll-padding-top: 3.5rem; }
 
 .bar-inner {
   display: grid;
-  grid-template-columns: auto 1fr auto;
+  grid-template-columns: auto minmax(0, 1fr) auto;
   align-items: center;
   gap: clamp(1rem, 4vw, 3rem);
   padding: 1.35rem var(--gutter);

@@ -112,7 +112,23 @@ async def _respond(
         await msg.answer(reply)
         return
 
-    system = p.build_system(personas.LAWS, row["dossier"])
+    from datetime import datetime, timedelta, timezone
+
+    local = datetime.now(timezone.utc) + timedelta(hours=settings.tz_offset)
+    days = ["понедельник", "вторник", "среду", "четверг", "пятницу", "субботу", "воскресенье"]
+    part = ("ночь" if local.hour < 5 else "утро" if local.hour < 12
+            else "день" if local.hour < 18 else "вечер")
+
+    system = p.build_system(personas.LAWS, row["dossier"]) + (
+        f"\n\n---\n\n## Сейчас\n"
+        f"{local:%d.%m.%Y}, {days[local.weekday()]}, {local:%H:%M} по местному времени. "
+        f"На дворе {part}.\n"
+        f"В истории разговора перед репликами человека стоят пометки вроде "
+        f"[спустя месяц] или [на следующий день] — это пауза между сообщениями. "
+        f"Пользуйся ими: не делай вид, что весь разговор шёл подряд, и замечай "
+        f"вслух, если человек пропал надолго и вернулся с тем же самым. "
+        f"Сами пометки в ответе не повторяй."
+    )
     if directive:
         system += f"\n\n---\n\n## Режим этого ответа\n{directive.strip()}"
 
