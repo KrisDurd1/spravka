@@ -501,7 +501,15 @@ function navigation(): void {
     label.textContent = section.dataset.label ?? "";
     const mark = document.createElement("i");
     b.append(label, mark);
-    b.addEventListener("click", () => section.scrollIntoView({ behavior: "smooth" }));
+    b.addEventListener("click", () => {
+      const root = document.documentElement;
+      const was = root.style.scrollSnapType;
+      root.style.scrollSnapType = "none";
+      section.scrollIntoView({ behavior: REDUCED ? "auto" : "smooth", block: "start" });
+      window.setTimeout(() => {
+        root.style.scrollSnapType = was;
+      }, 900);
+    });
     dots.append(b);
   }
 
@@ -515,13 +523,22 @@ function navigation(): void {
         }
       }
     },
-    { threshold: 0.35 },
+    // высокий блок не наберёт 35% видимости — следим за полосой по центру экрана
+    { rootMargin: "-45% 0px -45% 0px", threshold: 0 },
   );
   sections.forEach((s) => eye.observe(s));
 
   document.querySelectorAll<HTMLButtonElement>("[data-next]").forEach((b) => {
     b.addEventListener("click", () => {
-      document.getElementById(b.dataset.next ?? "")?.scrollIntoView({ behavior: "smooth" });
+      const target = document.getElementById(b.dataset.next ?? "");
+      if (!target) return;
+      const root = document.documentElement;
+      const was = root.style.scrollSnapType;
+      root.style.scrollSnapType = "none";
+      target.scrollIntoView({ behavior: REDUCED ? "auto" : "smooth", block: "start" });
+      window.setTimeout(() => {
+        root.style.scrollSnapType = was;
+      }, 900);
     });
   });
 }

@@ -370,7 +370,7 @@ html {
   scroll-snap-type: y proximity;
 }
 
-.snap { scroll-snap-align: start; scroll-margin-top: 0; }
+.snap { scroll-snap-align: start; scroll-margin-top: 4.5rem; }
 
 /* появление блоков */
 
@@ -1148,10 +1148,11 @@ html { scroll-snap-type: y mandatory; scroll-padding-top: 3.5rem; }
 /* Секции с большим содержимым перестают быть полноэкранными:
    иначе прилипание держит центр и края уходят под шапку. */
 @supports (height: 100svh) {
-  .snap:has(.cmds) ,
+  .snap:has(.cmds),
   .snap:has(.intercepts) {
     min-height: auto;
     scroll-snap-align: none;
+    scroll-margin-top: 4.5rem;
     padding-block: clamp(4.5rem, 9vh, 6rem) clamp(2.5rem, 6vh, 4rem);
   }
 }
@@ -1160,6 +1161,7 @@ html { scroll-snap-type: y mandatory; scroll-padding-top: 3.5rem; }
 .block--long {
   min-height: auto;
   scroll-snap-align: none;
+  scroll-margin-top: 4.5rem;
   padding-block: clamp(4.5rem, 9vh, 6rem) clamp(2.5rem, 6vh, 4rem);
 }
 
