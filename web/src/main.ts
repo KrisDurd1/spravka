@@ -354,6 +354,9 @@ function paint(): void {
   const d = t();
   document.documentElement.lang = lang;
   document.title = d.title;
+  document
+    .querySelector('meta[name="description"]')
+    ?.setAttribute("content", d.desc);
 
   for (const el of document.querySelectorAll<HTMLElement>("[data-t]")) {
     const key = el.dataset.t as keyof typeof d;
