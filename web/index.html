@@ -30,6 +30,8 @@
       <span class="feed-line" id="feed"></span>
     </span>
 
+    <nav class="langs" id="langs" aria-label="Язык"></nav>
+
     <span class="status">
       <span class="lamp" aria-hidden="true"><i></i></span>
       <span class="status-txt"><span class="roll" id="roll">01</span>&nbsp;/&nbsp;04</span>
@@ -45,63 +47,53 @@
     <canvas class="field" id="hero-sky" aria-hidden="true"></canvas>
     <div class="wrap hero-inner">
       <h1 class="lift" data-reveal>
-        <span class="ln"><i>Ответ</i> <i>у</i> <i>тебя</i></span>
-        <span class="ln"><i>уже</i> <i>есть.</i></span>
-        <span class="ln muted"><i>Не</i> <i>хватает</i> <i>вопроса.</i></span>
+        <span class="ln" data-t="heroA"></span>
+        <span class="ln" data-t="heroB"></span>
+        <span class="ln muted" data-t="heroC"></span>
       </h1>
-      <p class="lede" data-reveal>
-        Четыре голоса, которые не советуют и не утешают. Они смотрят на то,
-        что ты пишешь, и возвращают то, что было пропущено.
-      </p>
+      <p class="lede" data-reveal><span data-t="lede"></span></p>
       <p class="act" data-reveal>
         <a class="cta flip" href="https://t.me/spravka_o_raspade_bot">
-          <span class="face"><span>Выйти на связь</span></span>
-          <span class="face back"><span>Открыть чат</span></span>
+          <span class="face"><span data-t="cta"></span></span>
+          <span class="face back"><span data-t="ctaBack"></span></span>
         </a>
-        <a class="cta ghost" href="https://github.com/KrisDurd1/personal-degradation-protocol">Смотреть код</a>
+        <a class="cta ghost" href="https://github.com/KrisDurd1/personal-degradation-protocol" data-t="code"></a>
       </p>
     </div>
     <div class="ripple" id="ripple" aria-hidden="true"></div>
-    <button class="next" type="button" data-next="s2">ниже — что это и зачем</button>
+    <button class="next" type="button" data-next="s2" data-t="scroll"></button>
   </section>
 
   <section class="wrap block snap" id="s2" data-label="что это">
-    <p class="eyebrow"><i class="tick" aria-hidden="true"></i>что это</p>
-    <h2 data-reveal>Наблюдательный пост<br />на одного человека.</h2>
+    <p class="eyebrow"><i class="tick" aria-hidden="true"></i><span data-t="aboutLabel"></span></p>
+    <h2 data-reveal data-t-html="aboutH"></h2>
     <p class="lede" data-reveal>
       Пишешь, что происходит. Он снимает показания и отвечает странно, но по делу.
       Каждый обмен ложится в журнал.
     </p>
-    <ol class="rules" data-reveal>
-      <li data-n="01"><span class="num">01</span><b>Не советует</b><em>совет и так известен</em></li>
-      <li data-n="02"><span class="num">02</span><b>Не утешает</b><em>описывает, что видит</em></li>
-      <li data-n="03"><span class="num">03</span><b>Ничего не вечно</b><em>состояние, а не приговор</em></li>
-    </ol>
+    <ol class="rules" id="rules" data-reveal></ol>
   </section>
 
-  <section class="wrap block snap" id="s3" data-label="журнал">
-    <p class="eyebrow"><i class="tick" aria-hidden="true"></i>личный журнал</p>
-    <h2 class="h3" data-reveal>Всё остаётся. Только у тебя.</h2>
+  <section class="wrap block snap block--long" id="s3" data-label="журнал">
+    <p class="eyebrow"><i class="tick" aria-hidden="true"></i><span data-t="journalLabel"></span></p>
+    <h2 class="h3" data-reveal data-t="journalH"></h2>
     <p class="lede" data-reveal>
       Бот ведёт журнал одного человека — твой. Никто другой его не видит и не читает.
       Записи копятся сами, специально ничего вести не надо.
     </p>
     <dl class="cmds" id="cmds" data-reveal></dl>
-    <p class="note">
-      Чем длиннее журнал, тем точнее он замечает, что возвращается.
-      Можно прислать фотографию — посмотрит и зацепится за одну деталь.
-    </p>
+    <p class="note" data-t="journalNote"></p>
   </section>
 
-  <section class="wrap block snap" id="s4" data-label="перехвачено">
-    <p class="eyebrow"><i class="tick" aria-hidden="true"></i>перехвачено</p>
+  <section class="wrap block snap block--long" id="s4" data-label="перехвачено">
+    <p class="eyebrow"><i class="tick" aria-hidden="true"></i><span data-t="interceptLabel"></span></p>
     <ul class="intercepts" id="intercepts" data-reveal></ul>
   </section>
 
   <section class="wrap block snap" id="s5" data-label="голоса">
-    <p class="eyebrow"><i class="tick" aria-hidden="true"></i>кто говорит</p>
-    <h2 class="h3" data-reveal>Четыре голоса</h2>
-    <p class="lede" data-reveal>Величина объекта — насколько голос основной. Переключаются в чате.</p>
+    <p class="eyebrow"><i class="tick" aria-hidden="true"></i><span data-t="voicesLabel"></span></p>
+    <h2 class="h3" data-reveal data-t="voicesH"></h2>
+    <p class="lede" data-reveal><span data-t="voicesLede"></span></p>
 
     <div class="sky" id="sky" data-reveal>
       <canvas class="field" id="voice-sky" aria-hidden="true"></canvas>
@@ -116,13 +108,13 @@
       <p class="about" id="v-about"></p>
       <ul class="tags" id="v-tags"></ul>
       <p class="sample" id="v-sample"></p>
-      <p class="fine">в чате: <code id="v-cmd"></code></p>
+      <p class="fine"><span data-t="inChat"></span> <code id="v-cmd"></code></p>
     </article>
   </section>
 
   <footer class="wrap foot">
-    <p><a href="https://github.com/KrisDurd1/personal-degradation-protocol">Исходники и законы голоса</a></p>
-    <p class="note">Всё обратимо, пока измеряется.</p>
+    <p><a href="https://github.com/KrisDurd1/personal-degradation-protocol" data-t="footLink"></a></p>
+    <p class="note" data-t="footNote"></p>
   </footer>
 </main>
 

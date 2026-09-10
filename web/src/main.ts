@@ -1,7 +1,11 @@
-import { INTERCEPTS, JOURNAL, VOICES, type Voice } from "./voices";
+import { INTERCEPTS, VOICES, type Voice } from "./voices";
+import { LANGS, T, detect, type Lang } from "./i18n";
 
 const REDUCED = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 const $ = <T extends HTMLElement>(id: string): T => document.getElementById(id) as T;
+
+let lang: Lang = detect();
+const t = (): (typeof T)["ru"] => T[lang];
 
 /* ---------- звёздное поле ---------- */
 
@@ -130,7 +134,8 @@ function ripple(): void {
 
 function lists(): void {
   const cmds = $("cmds");
-  for (const [cmd, what] of JOURNAL) {
+  cmds.replaceChildren();
+  for (const [cmd, what] of t().commands) {
     const row = document.createElement("div");
     row.className = "cmd";
     const dt = document.createElement("dt");
@@ -142,7 +147,8 @@ function lists(): void {
   }
 
   const feed = $("intercepts");
-  for (const [src, line, at] of INTERCEPTS) {
+  feed.replaceChildren();
+  for (const [src, line, at] of t().intercepts ?? INTERCEPTS) {
     const li = document.createElement("li");
     const a = document.createElement("span");
     a.className = "src";
@@ -207,14 +213,18 @@ function focusCard(): void {
   }, 900);
 }
 
+let current: Voice = VOICES[0];
+
 function open(v: Voice): void {
+  current = v;
+  const tr = t().voices[v.id] ?? { name: v.name, tagline: v.tagline, about: v.about, registers: v.registers };
   $("v-code").textContent = v.code;
-  $("v-mag").textContent = v.tagline;
-  $("v-name").textContent = v.name;
-  $("v-about").textContent = v.about;
+  $("v-mag").textContent = tr.tagline;
+  $("v-name").textContent = tr.name;
+  $("v-about").textContent = tr.about;
   $("v-cmd").textContent = `/voice ${v.id}`;
   $("v-tags").replaceChildren(
-    ...v.registers.map((r) => {
+    ...tr.registers.map((r) => {
       const li = document.createElement("li");
       li.textContent = r;
       return li;
@@ -227,7 +237,7 @@ function open(v: Voice): void {
     card.classList.add("switch");
   }
 
-  retype(v.sample);
+  retype(tr.sample ?? v.sample);
   document.querySelectorAll<HTMLButtonElement>(".star").forEach((b) => {
     b.setAttribute("aria-pressed", String(b.dataset.id === v.id));
   });
@@ -262,7 +272,7 @@ function starmap(): void {
     dot.className = "dot";
     dot.append(document.createElement("i"));   // диагональные лучи
     const label = document.createElement("span");
-    label.textContent = v.name;
+    label.textContent = t().voices[v.id]?.name ?? v.name;
     b.append(dot, label);
     b.addEventListener("click", () => {
       open(v);
@@ -328,18 +338,120 @@ function starmap(): void {
   });
 }
 
+/* ---------- перевод страницы ---------- */
+
+function words(el: HTMLElement, phrase: string): void {
+  el.replaceChildren(
+    ...phrase.split(" ").flatMap((w, i) => {
+      const item = document.createElement("i");
+      item.textContent = w;
+      return i === 0 ? [item] : [document.createTextNode(" "), item];
+    }),
+  );
+}
+
+function paint(): void {
+  const d = t();
+  document.documentElement.lang = lang;
+  document.title = d.title;
+
+  for (const el of document.querySelectorAll<HTMLElement>("[data-t]")) {
+    const key = el.dataset.t as keyof typeof d;
+    const value = d[key];
+    if (typeof value !== "string") continue;
+    if (el.classList.contains("ln")) words(el, value);
+    else el.textContent = value;
+  }
+
+  for (const el of document.querySelectorAll<HTMLElement>("[data-t-html]")) {
+    const key = el.dataset.tHtml as keyof typeof d;
+    const value = d[key];
+    if (typeof value === "string") {
+      el.replaceChildren(
+        ...value.split("\n").flatMap((line, i) => {
+          const parts: Node[] = i ? [document.createElement("br")] : [];
+          parts.push(document.createTextNode(line));
+          return parts;
+        }),
+      );
+    }
+  }
+
+  // правила
+  const rules = $("rules");
+  rules.replaceChildren(
+    ...d.rules.map(([title, note], i) => {
+      const li = document.createElement("li");
+      li.dataset.n = String(i + 1).padStart(2, "0");
+      const num = document.createElement("span");
+      num.className = "num";
+      num.textContent = li.dataset.n;
+      const b = document.createElement("b");
+      b.textContent = title;
+      const em = document.createElement("em");
+      em.textContent = note;
+      li.append(num, b, em);
+      return li;
+    }),
+  );
+
+  lists();
+  ticker();
+  relabel();
+  open(current);
+}
+
+/** Подписи звёзд ставятся один раз при сборке карты — обновляем их отдельно. */
+function relabel(): void {
+  for (const b of document.querySelectorAll<HTMLElement>(".star")) {
+    const v = VOICES.find((x) => x.id === b.dataset.id);
+    const label = b.querySelector("span:last-child");
+    if (v && label) label.textContent = t().voices[v.id]?.name ?? v.name;
+  }
+}
+
+function switcher(): void {
+  const box = $("langs");
+  const slot = document.createElement("span");
+  slot.className = "lang-slot";
+  slot.setAttribute("aria-hidden", "true");
+
+  const move = (): void => {
+    const i = LANGS.findIndex(([code]) => code === lang);
+    slot.style.transform = `translateX(${i * 100}%)`;
+  };
+
+  const buttons = LANGS.map(([code, label]) => {
+    const b = document.createElement("button");
+    b.className = "lang";
+    b.type = "button";
+    b.lang = code;
+    b.textContent = label;
+    b.setAttribute("aria-current", String(code === lang));
+    b.addEventListener("click", () => {
+      if (code === lang) return;
+      lang = code;
+      localStorage.setItem("plr-lang", code);
+      for (const other of buttons) {
+        other.setAttribute("aria-current", String(other === b));
+      }
+      move();
+      box.classList.add("flick");
+      window.setTimeout(() => box.classList.remove("flick"), 320);
+      paint();
+    });
+    return b;
+  });
+
+  box.replaceChildren(slot, ...buttons);
+  move();
+}
+
 /* ---------- бегущая строка в шапке ---------- */
 
 function ticker(): void {
   const line = $("feed");
-  const items = [
-    "пост на связи",
-    "объектов в поле: 04",
-    "журнал ведётся",
-    "показания снимаются",
-    "распад продолжается",
-    "всё обратимо, пока измеряется",
-  ];
+  const items = t().ticker;
   // дублируем, чтобы лента шла без разрыва
   const once = items.map((s) => `<b>·</b>&nbsp;&nbsp;${s}&nbsp;&nbsp;`).join("");
   line.innerHTML = once + once;
@@ -411,13 +523,12 @@ function navigation(): void {
   });
 }
 
-ticker();
+switcher();
 sky($("hero-sky") as HTMLCanvasElement, 4800);
 sky($("voice-sky") as HTMLCanvasElement, 3600);
 ripple();
-lists();
 starmap();
-open(VOICES[0]);
+paint();
 reveal();
 navigation();
 

@@ -577,6 +577,7 @@ html { scroll-snap-type: y mandatory; scroll-padding-top: 3.5rem; }
   display: flex;
   flex-direction: column;
   justify-content: center;
+  scroll-snap-stop: normal;
   padding-block: clamp(4rem, 8vh, 5.25rem) clamp(1.25rem, 4vh, 2.5rem);
 }
 
@@ -1139,4 +1140,98 @@ html { scroll-snap-type: y mandatory; scroll-padding-top: 3.5rem; }
 @media (prefers-reduced-motion: reduce) {
   .mark-dot, .feed-line, .lamp i, .lamp::after, .bar-scan { animation: none; }
   .lamp i { background: var(--seal); }
+}
+
+
+/* ============ длинные блоки не режутся ============ */
+
+/* Секции с большим содержимым перестают быть полноэкранными:
+   иначе прилипание держит центр и края уходят под шапку. */
+@supports (height: 100svh) {
+  .snap:has(.cmds) ,
+  .snap:has(.intercepts) {
+    min-height: auto;
+    scroll-snap-align: none;
+    padding-block: clamp(4.5rem, 9vh, 6rem) clamp(2.5rem, 6vh, 4rem);
+  }
+}
+
+/* запасной вариант для браузеров без :has */
+.block--long {
+  min-height: auto;
+  scroll-snap-align: none;
+  padding-block: clamp(4.5rem, 9vh, 6rem) clamp(2.5rem, 6vh, 4rem);
+}
+
+/* переключатель языка — тумблер на приборе */
+
+.langs {
+  position: relative;
+  display: inline-grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
+  padding: 2px;
+  border: 1px solid #2b303a;
+  background: #0e1116;
+}
+
+/* подсветка, которая ездит под выбранным языком */
+.lang-slot {
+  position: absolute;
+  top: 2px;
+  bottom: 2px;
+  left: 2px;
+  width: calc((100% - 4px) / 4);
+  background: var(--seal);
+  transition: transform 0.42s cubic-bezier(0.16, 1, 0.3, 1);
+  pointer-events: none;
+}
+
+.lang-slot::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  box-shadow: 0 0 12px 2px rgba(210, 86, 76, 0.55);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.langs.flick .lang-slot::after { opacity: 1; }
+
+.lang {
+  position: relative;
+  z-index: 1;
+  padding: 0.34rem 0.62rem;
+  background: none;
+  border: 0;
+  cursor: pointer;
+  font-family: var(--mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.12em;
+  color: #6a7080;
+  transition: color 0.25s ease;
+}
+
+.lang:hover { color: var(--bone); }
+.lang[aria-current="true"] { color: #f2e9d6; }
+.lang:focus-visible { outline: 1px solid var(--lilac); outline-offset: 3px; }
+
+/* при переключении по табло пробегает помеха */
+.langs.flick .lang { animation: flick 0.3s steps(2) 1; }
+
+@keyframes flick {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0.35; }
+}
+
+.bar-inner { grid-template-columns: auto minmax(0, 1fr) auto auto; }
+
+@media (max-width: 56rem) {
+  .feed { display: none; }
+  .bar-inner { grid-template-columns: auto 1fr auto; gap: 0.75rem; }
+}
+
+@media (max-width: 30rem) {
+  .lang { padding: 0.3rem 0.4rem; font-size: 0.62rem; }
+  .status-txt { display: none; }
 }
